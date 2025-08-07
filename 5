@@ -1,0 +1,21 @@
+gcloud dataflow flex-template run "sql-parquet-batched-job-$(date +%Y%m%d-%H%M%S)" \
+  --template-file-gcs-location "gs://rxo-dataeng-datalake-np-dataflow/templates/op-sql-qa-pqt-to-gcs.json" \
+  --region "us-central1" \
+  --project "rxo-dataeng-datalake-np" \
+  --parameters input_connection="sqlserver-rxo-datalake-np",\
+input_query="SELECT * FROM locale.Address",\
+output_path="gs://rxo-dataeng-datalake-np/dataflow/staging/output_parquet/locale/Address/2025/08/07",\
+output_format="parquet",\
+output_filename="output",\
+order_column="AddressId",\
+chunk_size="100000",\
+template_name="op-sql-qa-pqt-to-gcs",\
+subnetwork="https://www.googleapis.com/compute/v1/projects/rxo-dataeng-datalake-np/regions/us-central1/subnetworks/rxo-subnet",\
+use_public_ips="false",\
+temp_location="gs://rxo-dataeng-datalake-np/dataflow/temp-location/sql",\
+staging_location="gs://rxo-dataeng-datalake-np/dataflow/staging",\
+job_name="gcp_project-rxo-dataeng-datalake-np-table-locale_address",\
+secret_id="rxo-dataeng-datalake-np-flexquery",\
+num_workers="50",\
+autoscaling_algorithm="THROUGHPUT",\
+max_num_workers="300"

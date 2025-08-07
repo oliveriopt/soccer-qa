@@ -8,3 +8,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 ENTRYPOINT ["/opt/google/dataflow/python_template_launcher", "--launcher_project_id=rxo-dataeng-datalake-np"]
+gcloud dataflow flex-template build gs://rxo-dataeng-datalake-np-dataflow/templates/op-sql-qa-pqt-to-gcs.json \
+  --image "us-central1-docker.pkg.dev/rxo-dataeng-datalake-np/op-sql-qa-pqt-to-gcs/op-sql-qa-pqt-to-gcs:latest" \
+  --sdk-language "PYTHON" \
+  --flex-template-base-image "PYTHON:3.10" \
+  --metadata-file "metadata.json" \
+  --project "rxo-dataeng-datalake-np"

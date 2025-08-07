@@ -1,0 +1,10 @@
+FROM gcr.io/dataflow-templates-base/python310-template-launcher-base
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+ENTRYPOINT ["/opt/google/dataflow/python_template_launcher", "--launcher_project_id=rxo-dataeng-datalake-np"]

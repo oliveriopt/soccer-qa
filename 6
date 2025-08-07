@@ -14,3 +14,23 @@ gcloud dataflow flex-template build gs://rxo-dataeng-datalake-np-dataflow/templa
   --flex-template-base-image "PYTHON:3.10" \
   --metadata-file "metadata.json" \
   --project "rxo-dataeng-datalake-np"
+
+
+{"severity":"INFO","time":"2025/08/07 20:43:40.493598","line":"exec.go:66","message":"usage: main.py [-h] --connection_name CONNECTION_NAME --query QUERY"}
+{"severity":"INFO","time":"2025/08/07 20:43:40.493724","line":"exec.go:66","message":"               --output_path OUTPUT_PATH --qa_query_id QA_QUERY_ID"}
+{"severity":"INFO","time":"2025/08/07 20:43:40.493773","line":"exec.go:66","message":"               --qa_bq_table QA_BQ_TABLE --qa_check_type QA_CHECK_TYPE"}
+{"severity":"INFO","time":"2025/08/07 20:43:40.494020","line":"exec.go:66","message":"main.py: error: the following arguments are required: --connection_name, --output_path, --qa_query_id, --qa_bq_table, --qa_check_type"}
+
+
+gcloud dataflow flex-template run "sql-parquet-batched-job-$(date +%Y%m%d-%H%M%S)"   --template-file-gcs-location "gs://rxo-dataeng-datalake-np-dataflow/templates/op-sql-qa-pqt-to-gcs.json"   --region "us-central1"   --project "rxo-dataeng-datalake-np"   --service-account-email "ds-dataflow-dataeng-gsa@rxo-dataeng-datalake-np.iam.gserviceaccount.com"   --subnetwork "https://www.googleapis.com/compute/v1/projects/nxo-corp-infra/regions/us-central1/subnetworks/rxo-dataeng-datalake-np-uscentral1"   --disable-public-ips   --staging-location "gs://rxo-dataeng-datalake-np-dataflow/staging"   --temp-location "gs://rxo-dataeng-datalake-np-dataflow/temp"   --parameters "gcp_project=rxo-dataeng-datalake-np,\
+database=XPOMaster,\
+schema=locale,\
+table=Address,\
+query=SELECT * FROM locale.Address,\
+primary_key=AddressId,\
+output_gcs_path=gs://rxo-dataeng-datalake-np-raw/sql/brokerage-fo/XPOMaster/locale/Address/2025/07/02/,\
+type_of_extraction=full,\
+reload_flag=true,\
+secret_id=rxo-dataeng-datalake-np-brokerage-fo-mssql-xpomaster-uat-creds-connection-string,\
+batch_size=500000,\
+chunk_size=100000"

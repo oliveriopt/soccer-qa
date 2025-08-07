@@ -38,3 +38,27 @@ output_path: Unrecognized parameter
     parameter: order_column
   - description: Unrecognized parameter
     parameter: output_path
+
+
+gcloud dataflow flex-template run "sql-parquet-batched-job-$(date +%Y%m%d-%H%M%S)" \
+  --template-file-gcs-location "gs://rxo-dataeng-datalake-np-dataflow/templates/op-sql-qa-pqt-to-gcs.json" \
+  --region "us-central1" \
+  --project "rxo-dataeng-datalake-np" \
+  --service-account-email "ds-dataflow-dataeng-gsa@rxo-dataeng-datalake-np.iam.gserviceaccount.com" \
+  --subnetwork "https://www.googleapis.com/compute/v1/projects/nxo-corp-infra/regions/us-central1/subnetworks/rxo-dataeng-datalake-np-uscentral1" \
+  --disable-public-ips \
+  --staging-location "gs://rxo-dataeng-datalake-np-dataflow/staging" \
+  --temp-location "gs://rxo-dataeng-datalake-np-dataflow/temp" \
+  --parameters "gcp_project=rxo-dataeng-datalake-np,\
+database=XPOMaster,\
+schema=locale,\
+table=Address,\
+query=SELECT * FROM locale.Address,\
+primary_key=AddressId,\
+output_gcs_path=gs://rxo-dataeng-datalake-np-raw/sql/brokerage-fo/XPOMaster/locale/Address/2025/07/02/,\
+type_of_extraction=full,\
+reload_flag=true,\
+secret_id=rxo-dataeng-datalake-np-brokerage-fo-mssql-xpomaster-uat-creds-connection-string,\
+batch_size=500000,\
+chunk_size=100000"
+

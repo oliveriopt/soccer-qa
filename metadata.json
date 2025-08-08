@@ -1,1 +1,29 @@
+{
+  "name": "op-sql-qa-pqt-to-gcs",
+  "description": "Extrae de SQL Server a Parquet en GCS y ejecuta hasta 5 QA desde qa_query_plan.",
+  "parameters": [
+    { "name": "gcp_project", "label": "GCP Project ID", "helpText": "Project ID", "paramType": "TEXT", "isOptional": false },
 
+    { "name": "database", "label": "Database", "helpText": "SQL Server database name", "paramType": "TEXT", "isOptional": false },
+    { "name": "schema", "label": "Schema", "helpText": "SQL Server schema name", "paramType": "TEXT", "isOptional": false },
+    { "name": "table", "label": "Table", "helpText": "SQL Server table name", "paramType": "TEXT", "isOptional": false },
+
+    { "name": "secret_id", "label": "Secret ID", "helpText": "Secret con credenciales", "paramType": "TEXT", "isOptional": true },
+    { "name": "connection_name", "label": "Connection alias", "helpText": "Alias fo/bdw (si no usas secret)", "paramType": "TEXT", "isOptional": true },
+
+    { "name": "query", "label": "Query override", "helpText": "Query principal opcional", "paramType": "TEXT", "isOptional": true },
+    { "name": "primary_key", "label": "Primary Key", "helpText": "Columna para orden/chunk", "paramType": "TEXT", "isOptional": false },
+
+    { "name": "type_of_extraction", "label": "Extraction type", "helpText": "full o change_tracking", "paramType": "TEXT", "isOptional": false },
+    { "name": "reload_flag", "label": "Reload flag", "helpText": "true/false", "paramType": "TEXT", "isOptional": false },
+
+    { "name": "batch_size", "label": "Batch size", "helpText": "Filas por batch", "paramType": "TEXT", "isOptional": true },
+    { "name": "chunk_size", "label": "Chunk size", "helpText": "Filas por write", "paramType": "TEXT", "isOptional": true },
+
+    { "name": "output_gcs_path", "label": "Output GCS Path", "helpText": "Dónde escribir Parquet(s)", "paramType": "TEXT", "isOptional": false },
+
+    { "name": "qa_check_types", "label": "QA Check Types", "helpText": "CSV de checks (vacío=todos)", "paramType": "TEXT", "isOptional": true },
+    { "name": "qa_limit", "label": "QA limit", "helpText": "Máx # de QA (default 5)", "paramType": "TEXT", "isOptional": true },
+    { "name": "qa_results_table", "label": "QA Results Table", "helpText": "project.dataset.table", "paramType": "TEXT", "isOptional": false }
+  ]
+}

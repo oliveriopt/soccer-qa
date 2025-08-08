@@ -195,3 +195,32 @@ Notas para evitar errores clásicos
 
 ¿Quieres que revisemos tu metadata.json actual para confirmar que calza con el main.py?
 
+
+
+project: rxo-dataeng-datalake-np
+region: us-central1
+template-file-gcs-location: gs://rxo-dataeng-datalake-np-dataflow/templates/op-sql-qa-pqt-to-gcs.json
+service-account-email: ds-dataflow-dataeng-gsa@rxo-dataeng-datalake-np.iam.gserviceaccount.com
+subnetwork: https://www.googleapis.com/compute/v1/projects/nxo-corp-infra/regions/us-central1/subnetworks/rxo-dataeng-datalake-np-uscentral1
+disable-public-ips: true
+staging-location: gs://rxo-dataeng-datalake-np-dataflow/staging
+temp-location: gs://rxo-dataeng-datalake-np-dataflow/temp
+
+parameters:
+  gcp_project: rxo-dataeng-datalake-np
+  database: XPOMaster
+  schema: locale
+  table: Address
+  secret_id: rxo-dataeng-datalake-np-brokerage-fo-mssql-xpomaster-uat-creds-connection-string
+  primary_key: AddressId
+  type_of_extraction: full
+  reload_flag: "true"
+  batch_size: "500000"
+  chunk_size: "100000"
+  output_gcs_path: gs://rxo-dataeng-datalake-np-raw/sql/XPOMaster/locale/Address/2025/08/08/
+  qa_check_types: count_total_rows,nulls_per_column,hashcheck,duplicates_primary_key,value_dist_OrderId
+  qa_limit: "5"
+  qa_results_table: rxo-dataeng-datalake-np.dataops_admin.qa_query_results_comparison
+
+
+

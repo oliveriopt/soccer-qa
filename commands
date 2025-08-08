@@ -1,0 +1,157 @@
+Perfect—te dejo el **paso a paso completo** para construir la imagen, **hacer push**, **construir el Flex Template** usando tu `metadata.json`, **copiar el metadata a GCS** (si quieres guardarlo también ahí), y **correr** el job.
+
+> Ajusta lo que esté en MAYÚSCULAS si tu ruta o nombres son distintos.
+
+---
+
+# 0) Variables útiles (recomiendo exportarlas)
+
+```bash
+export PROJECT_ID="rxo-dataeng-datalake-np"
+export REGION="us-central1"
+export REPO="dataflow-templates"                       # Artifact Registry repo
+export IMAGE_NAME="sql-qa-runner"
+export IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE_NAME}:latest"
+
+export TEMPLATE_BUCKET="gs://rxo-dataeng-datalake-np-dataflow"
+export TEMPLATE_PATH="${TEMPLATE_BUCKET}/templates/op-sql-qa-pqt-to-gcs.json"
+
+# Si quieres guardar una copia del metadata.json en GCS:
+export METADATA_COPY_PATH="${TEMPLATE_BUCKET}/templates/metadata/op-sql-qa-pqt-to-gcs.metadata.json"
+```
+
+---
+
+# 1) Estructura local del proyecto
+
+En una carpeta (p.ej. `sql-qa-flex-template/`) debes tener:
+
+```
+Dockerfile
+requirements.txt
+main.py
+metadata.json
+```
+
+Asegúrate que **metadata.json** es el que te pasé (con los parámetros alineados al `main.py`).
+
+---
+
+# 2) Autenticación y permisos básicos
+
+```bash
+gcloud config set project "${PROJECT_ID}"
+gcloud auth login                           # si estás en local
+gcloud auth configure-docker ${REGION}-docker.pkg.dev
+```
+
+> Asegúrate de tener activadas APIs: Artifact Registry, Dataflow, BigQuery, Secret Manager (si lo usas).
+
+---
+
+# 3) Build de la imagen con Docker
+
+Desde la carpeta del proyecto (donde está tu Dockerfile):
+
+```bash
+docker build -t "${IMAGE_URI}" .
+```
+
+---
+
+# 4) Push de la imagen a Artifact Registry
+
+```bash
+docker push "${IMAGE_URI}"
+```
+
+---
+
+# 5) (Opcional) Copiar el **metadata.json** a GCS para tenerlo versionado
+
+Esto no es requerido por Dataflow (porque lo usa localmente en el build), pero mucha gente lo guarda en GCS para auditoría.
+
+```bash
+gsutil cp metadata.json "${METADATA_COPY_PATH}"
+```
+
+---
+
+# 6) Construir el **Flex Template** en GCS
+
+Este comando empaqueta tu `metadata.json` y referencia la imagen recién subidita:
+
+```bash
+gcloud dataflow flex-template build "${TEMPLATE_PATH}" \
+  --image "${IMAGE_URI}" \
+  --sdk-language "PYTHON" \
+  --metadata-file "metadata.json"
+```
+
+Verifica que el archivo `${TEMPLATE_PATH}` ahora exista en tu bucket:
+
+```bash
+gsutil ls "${TEMPLATE_PATH}"
+```
+
+---
+
+# 7) Correr el Flex Template
+
+Ejemplo usando conexión `fo`, exportando la tabla y luego corriendo **hasta 5** QA desde `qa_query_plan` filtradas por `check_type`.
+
+```bash
+gcloud dataflow flex-template run "qa-job-$(date +%Y%m%d-%H%M%S)" \
+  --project="${PROJECT_ID}" \
+  --region="${REGION}" \
+  --template-file-gcs-location="${TEMPLATE_PATH}" \
+  --service-account-email="ds-dataflow-dataeng-gsa@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --subnetwork="https://www.googleapis.com/compute/v1/projects/nxo-corp-infra/regions/us-central1/subnetworks/rxo-dataeng-datalake-np-uscentral1" \
+  --disable-public-ips \
+  --staging-location="${TEMPLATE_BUCKET}/staging" \
+  --temp-location="${TEMPLATE_BUCKET}/temp" \
+  --parameters gcp_project="${PROJECT_ID}",\
+connection_name="fo",\
+query="SELECT TOP 100 * FROM locale.Address",\
+data_output_path="gs://rxo-dataeng-datalake-np-raw/sql/XPOMaster/locale/Address/$(date +%Y/%m/%d)/out.snappy.parquet",\
+table_catalog="XPOMaster",\
+table_schema="locale",\
+table_name="Address",\
+qa_check_types="count_total_rows,nulls_per_column,hashcheck",\
+qa_limit="5",\
+qa_results_table="rxo-dataeng-datalake-np.dataops_admin.qa_query_results_comparison"
+```
+
+> Si quieres **reusar un Parquet existente** (saltarte la extracción), agrega y ajusta:
+>
+> ```
+> --parameters use_existing_parquet="true",existing_parquet_path="gs://.../out.snappy.parquet"
+> ```
+>
+> y entonces no pases `connection_name` ni `query` ni `data_output_path`.
+
+---
+
+# 8) Verificación rápida
+
+* **Dataflow UI**: el job debe mostrar una rama de export (o `Use Existing Parquet`) y otra que lee `qa_query_plan`, hace `QA Rows ToList`, “Attach QA”, y “Run QA”.
+* **BigQuery**:
+
+  ```sql
+  SELECT * 
+  FROM `rxo-dataeng-datalake-np.dataops_admin.qa_query_results_comparison` 
+  ORDER BY run_ts DESC 
+  LIMIT 100;
+  ```
+* **GCS**: valida que el Parquet esté en el `data_output_path`.
+
+---
+
+# Tips para evitar dolores
+
+* Los **nombres de parámetros** del `metadata.json` deben coincidir exacto con los definidos en `PipelineOptions` del `main.py`.
+* Si ves “Missing/Unrecognized parameter”, es 99% nombre mal alineado.
+* Si usas `Trusted_Connection=yes` y falla en workers: cambia a conexión con usuario/clave por **Secret Manager** y arma el connection string en runtime.
+* `ToList()` en el export es solo para QA/UAT (datasets chicos). Para tablas grandes, cambia a escritura chunked (varios Parquet).
+
+¿Listo para correr? Si te aparece cualquier error de parámetros o permisos, pégamelo y lo depuramos en dos patadas.

@@ -1,1 +1,87 @@
+Tienes razón: no te aparecen los parámetros porque el metadata.json que estás usando no tiene el formato correcto para Flex Templates.
+En Flex, los parámetros deben ir al nivel raíz bajo la clave parameters (no dentro de metadata.parameters) y los campos se llaman helpText (camelCase), etc. Si los anidas o usas otras claves, Dataflow los ignora y no salen en la UI ni aceptan --parameters.
 
+Además, si construiste el template con un metadata.json viejo o en otra ruta, vas a seguir viendo el template antiguo.
+
+Qué hacer
+	1.	Corrige el metadata.json al formato Flex (top-level parameters). Ejemplo para tu caso de extracción:
+
+{
+  "name": "op-sql-qa-pqt-to-gcs",
+  "description": "Extrae de SQL Server a Parquet en GCS y ejecuta hasta 5 QA desde qa_query_plan.",
+  "parameters": [
+    { "name": "gcp_project", "label": "GCP Project ID", "helpText": "Project ID", "paramType": "TEXT", "isOptional": false },
+
+    { "name": "database", "label": "Database", "helpText": "SQL Server database name", "paramType": "TEXT", "isOptional": false },
+    { "name": "schema", "label": "Schema", "helpText": "SQL Server schema name", "paramType": "TEXT", "isOptional": false },
+    { "name": "table", "label": "Table", "helpText": "SQL Server table name", "paramType": "TEXT", "isOptional": false },
+
+    { "name": "secret_id", "label": "Secret ID", "helpText": "Secret con credenciales", "paramType": "TEXT", "isOptional": true },
+    { "name": "connection_name", "label": "Connection alias", "helpText": "Alias fo/bdw (si no usas secret)", "paramType": "TEXT", "isOptional": true },
+
+    { "name": "query", "label": "Query override", "helpText": "Query principal opcional", "paramType": "TEXT", "isOptional": true },
+    { "name": "primary_key", "label": "Primary Key", "helpText": "Columna para orden/chunk", "paramType": "TEXT", "isOptional": false },
+
+    { "name": "type_of_extraction", "label": "Extraction type", "helpText": "full o change_tracking", "paramType": "TEXT", "isOptional": false },
+    { "name": "reload_flag", "label": "Reload flag", "helpText": "true/false", "paramType": "TEXT", "isOptional": false },
+
+    { "name": "batch_size", "label": "Batch size", "helpText": "Filas por batch", "paramType": "TEXT", "isOptional": true },
+    { "name": "chunk_size", "label": "Chunk size", "helpText": "Filas por write", "paramType": "TEXT", "isOptional": true },
+
+    { "name": "output_gcs_path", "label": "Output GCS Path", "helpText": "Dónde escribir Parquet(s)", "paramType": "TEXT", "isOptional": false },
+
+    { "name": "qa_check_types", "label": "QA Check Types", "helpText": "CSV de checks (vacío=todos)", "paramType": "TEXT", "isOptional": true },
+    { "name": "qa_limit", "label": "QA limit", "helpText": "Máx # de QA (default 5)", "paramType": "TEXT", "isOptional": true },
+    { "name": "qa_results_table", "label": "QA Results Table", "helpText": "project.dataset.table", "paramType": "TEXT", "isOptional": false }
+  ]
+}
+
+	2.	Asegura el match con tu main.py: los nombres deben coincidir con los argumentos definidos en PipelineOptions/CustomPipelineOptions (por ejemplo --output_gcs_path, --database, etc.). Si en tu main.py usas --data_output_path, el parámetro debe llamarse exactamente data_output_path en el metadata.json.
+	3.	Reconstruye el template (el anterior queda cacheado en GCS):
+
+	•	(Opcional) borra/ versiona el JSON del template:
+
+gsutil rm gs://rxo-dataeng-datalake-np-dataflow/templates/op-sql-qa-pqt-to-gcs.json
+
+
+	•	Construye de nuevo:
+
+gcloud dataflow flex-template build gs://rxo-dataeng-datalake-np-dataflow/templates/op-sql-qa-pqt-to-gcs.json \
+  --image "us-central1-docker.pkg.dev/rxo-dataeng-datalake-np/dataflow-flex-template/op-sql-qa-pqt-to-gcs:latest" \
+  --sdk-language "PYTHON" \
+  --metadata-file "metadata.json"
+
+
+	•	Verifica que el archivo en GCS es el nuevo:
+
+gsutil cat gs://rxo-dataeng-datalake-np-dataflow/templates/op-sql-qa-pqt-to-gcs.json
+
+
+
+	4.	Lanza el job pasando exactamente esos nombres:
+
+gcloud dataflow flex-template run "sql-parquet-batched-job-$(date +%Y%m%d-%H%M%S)" \
+  --template-file-gcs-location "gs://rxo-dataeng-datalake-np-dataflow/templates/op-sql-qa-pqt-to-gcs.json" \
+  --region "us-central1" \
+  --project "rxo-dataeng-datalake-np" \
+  --service-account-email "ds-dataflow-dataeng-gsa@rxo-dataeng-datalake-np.iam.gserviceaccount.com" \
+  --subnetwork "https://www.googleapis.com/compute/v1/projects/nxo-corp-infra/regions/us-central1/subnetworks/rxo-dataeng-datalake-np-uscentral1" \
+  --disable-public-ips \
+  --staging-location "gs://rxo-dataeng-datalake-np-dataflow/staging" \
+  --temp-location "gs://rxo-dataeng-datalake-np-dataflow/temp" \
+  --parameters gcp_project="rxo-dataeng-datalake-np",\
+database="XPOMaster",\
+schema="locale",\
+table="Address",\
+secret_id="rxo-dataeng-datalake-np-brokerage-fo-mssql-xpomaster-uat-creds-connection-string",\
+primary_key="AddressId",\
+type_of_extraction="full",\
+reload_flag="true",\
+batch_size="500000",\
+chunk_size="100000",\
+output_gcs_path="gs://rxo-dataeng-datalake-np-raw/sql/brokerage-fo/XPOMaster/locale/Address/$(date +%Y/%m/%d)/",\
+qa_check_types="count_total_rows,nulls_per_column,hashcheck,duplicates_primary_key,value_dist_OrderId",\
+qa_limit="5",\
+qa_results_table="rxo-dataeng-datalake-np.dataops_admin.qa_query_results_comparison"
+
+Si tras esto sigue sin mostrarlos, casi seguro estás construyendo con otro metadata.json o apuntando a otro template JSON en GCS. Checa las rutas con gsutil cat y que el main.py use los mismos nombres.

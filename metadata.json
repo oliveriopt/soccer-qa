@@ -1,0 +1,167 @@
+{
+  "name": "op-sql-qa-pqt-to-gcs",
+  "description": "Pipeline to extract data to Parquet and run up to 5 QA checks from qa_query_plan",
+  "parameters": [
+    {
+      "name": "gcp_project",
+      "label": "GCP Project",
+      "helpText": "ID of the GCP project where the job will run and BigQuery will be accessed",
+      "paramType": "TEXT",
+      "isOptional": false
+    },
+    {
+      "name": "connection_name",
+      "label": "Connection Name",
+      "helpText": "Optional connection name for SQL Server (if not using Secret Manager)",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "secret_id",
+      "label": "Secret ID",
+      "helpText": "Optional Secret Manager ID with SQL Server credentials",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "query",
+      "label": "Main Extraction Query",
+      "helpText": "SQL query to extract data from SQL Server (required if use_existing_parquet=false)",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "data_output_path",
+      "label": "Data Output Path",
+      "helpText": "GCS path where the extracted Parquet file will be stored",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "use_existing_parquet",
+      "label": "Use Existing Parquet",
+      "helpText": "If true, skip extraction and use an existing Parquet file",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "existing_parquet_path",
+      "label": "Existing Parquet Path",
+      "helpText": "GCS path to an existing Parquet file to use instead of extraction",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "table_catalog",
+      "label": "Table Catalog",
+      "helpText": "Catalog (database) of the table for which QA checks will be run",
+      "paramType": "TEXT",
+      "isOptional": false
+    },
+    {
+      "name": "table_schema",
+      "label": "Table Schema",
+      "helpText": "Schema of the table for which QA checks will be run",
+      "paramType": "TEXT",
+      "isOptional": false
+    },
+    {
+      "name": "table_name",
+      "label": "Table Name",
+      "helpText": "Name of the table for which QA checks will be run",
+      "paramType": "TEXT",
+      "isOptional": false
+    },
+    {
+      "name": "qa_check_types",
+      "label": "QA Check Types",
+      "helpText": "Comma-separated list of check types to run (leave empty for all)",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "qa_limit",
+      "label": "Max QA Checks",
+      "helpText": "Maximum number of QA checks to retrieve from qa_query_plan",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "qa_results_table",
+      "label": "QA Results Table",
+      "helpText": "Fully-qualified BigQuery table where QA results will be stored (project.dataset.table)",
+      "paramType": "TEXT",
+      "isOptional": false
+    },
+    {
+      "name": "service_account_email",
+      "label": "Service Account Email",
+      "helpText": "Service account to use for the Dataflow job",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "subnetwork",
+      "label": "Subnetwork",
+      "helpText": "Subnetwork to use for Dataflow workers",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "disable_public_ips",
+      "label": "Disable Public IPs",
+      "helpText": "Whether to disable public IPs for Dataflow workers",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "staging_location",
+      "label": "Staging Location",
+      "helpText": "GCS path for Dataflow staging files",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "temp_location",
+      "label": "Temp Location",
+      "helpText": "GCS path for Dataflow temporary files",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "num_workers",
+      "label": "Number of Workers",
+      "helpText": "Initial number of Dataflow workers",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "max_num_workers",
+      "label": "Max Number of Workers",
+      "helpText": "Maximum number of Dataflow workers",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "autoscaling_algorithm",
+      "label": "Autoscaling Algorithm",
+      "helpText": "Dataflow autoscaling algorithm (THROUGHPUT_BASED or NONE)",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "machine_type",
+      "label": "Machine Type",
+      "helpText": "Machine type for Dataflow workers (e.g., e2-highmem-4)",
+      "paramType": "TEXT",
+      "isOptional": true
+    },
+    {
+      "name": "region",
+      "label": "Region",
+      "helpText": "GCP region to run the Dataflow job",
+      "paramType": "TEXT",
+      "isOptional": true
+    }
+  ]
+}

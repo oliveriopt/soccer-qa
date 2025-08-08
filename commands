@@ -85,3 +85,113 @@ qa_limit="5",\
 qa_results_table="rxo-dataeng-datalake-np.dataops_admin.qa_query_results_comparison"
 
 Si tras esto sigue sin mostrarlos, casi seguro estás construyendo con otro metadata.json o apuntando a otro template JSON en GCS. Checa las rutas con gsutil cat y que el main.py use los mismos nombres.
+
+
+
+Perfecto—paso a paso solo con Docker (sin gcloud builds submit) para dejar tu Flex Template listo y correrlo.
+
+0) Variables (ponlas una vez)
+
+export PROJECT_ID="rxo-dataeng-datalake-np"
+export REGION="us-central1"
+export AR_REPO="dataflow-templates"                           # nombre del repo en Artifact Registry
+export IMAGE_NAME="sql-qa-runner"
+export IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${IMAGE_NAME}:latest"
+
+export TEMPLATE_BUCKET="gs://rxo-dataeng-datalake-np-dataflow"
+export TEMPLATE_PATH="${TEMPLATE_BUCKET}/templates/op-sql-qa-pqt-to-gcs.json"
+
+1) Estructura local del proyecto
+
+En una carpeta (por ejemplo sql-qa-flex/) coloca:
+
+Dockerfile
+requirements.txt
+main.py              # el que te pasé
+metadata.json        # el que define los parámetros (top-level "parameters")
+
+2) Autenticación y permisos
+
+gcloud config set project "${PROJECT_ID}"
+gcloud auth login                                  # si estás en local
+gcloud auth configure-docker ${REGION}-docker.pkg.dev
+
+3) Crear repo (una sola vez, si no existe)
+
+gcloud artifacts repositories create "${AR_REPO}" \
+  --repository-format=docker \
+  --location="${REGION}" \
+  --description="Dataflow Flex Templates"
+
+4) Build de imagen con Docker
+
+Desde la carpeta donde está tu Dockerfile:
+
+docker build -t "${IMAGE_URI}" .
+
+5) Push de la imagen a Artifact Registry
+
+docker push "${IMAGE_URI}"
+
+6) (Opcional) sube el metadata.json a GCS para versionarlo
+
+gsutil cp metadata.json "${TEMPLATE_BUCKET}/templates/metadata/op-sql-qa-pqt-to-gcs.metadata.json"
+
+7) Construir el Flex Template en GCS
+
+gcloud dataflow flex-template build "${TEMPLATE_PATH}" \
+  --image "${IMAGE_URI}" \
+  --sdk-language "PYTHON" \
+  --metadata-file "metadata.json"
+
+Verifica que quedó:
+
+gsutil cat "${TEMPLATE_PATH}"
+
+8) Ejecutar el job (ejemplo)
+
+Primero exporta tabla → Parquet y luego ejecuta hasta 5 QA del qa_query_plan:
+
+gcloud dataflow flex-template run "qa-job-$(date +%Y%m%d-%H%M%S)" \
+  --project="${PROJECT_ID}" \
+  --region="${REGION}" \
+  --template-file-gcs-location="${TEMPLATE_PATH}" \
+  --service-account-email="ds-dataflow-dataeng-gsa@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --subnetwork="https://www.googleapis.com/compute/v1/projects/nxo-corp-infra/regions/us-central1/subnetworks/rxo-dataeng-datalake-np-uscentral1" \
+  --disable-public-ips \
+  --staging-location="${TEMPLATE_BUCKET}/staging" \
+  --temp-location="${TEMPLATE_BUCKET}/temp" \
+  --parameters gcp_project="${PROJECT_ID}",\
+database="XPOMaster",\
+schema="locale",\
+table="Address",\
+secret_id="rxo-dataeng-datalake-np-brokerage-fo-mssql-xpomaster-uat-creds-connection-string",\
+primary_key="AddressId",\
+type_of_extraction="full",\
+reload_flag="true",\
+batch_size="500000",\
+chunk_size="100000",\
+output_gcs_path="gs://rxo-dataeng-datalake-np-raw/sql/XPOMaster/locale/Address/$(date +%Y/%m/%d)/",\
+qa_check_types="count_total_rows,nulls_per_column,hashcheck,duplicates_primary_key,value_dist_OrderId",\
+qa_limit="5",\
+qa_results_table="rxo-dataeng-datalake-np.dataops_admin.qa_query_results_comparison"
+
+9) Verificación rápida
+	•	Dataflow UI: debe mostrarse el job con ramas de export y QA.
+	•	GCS: valida el Parquet en output_gcs_path.
+	•	BigQuery:
+
+SELECT * 
+FROM `rxo-dataeng-datalake-np.dataops_admin.qa_query_results_comparison`
+ORDER BY run_ts DESC
+LIMIT 100;
+
+
+
+Notas para evitar errores clásicos
+	•	Los nombres de parámetros del metadata.json deben coincidir exactamente con los definidos en main.py (gcp_project, database, schema, table, secret_id/connection_name, primary_key, type_of_extraction, reload_flag, batch_size, chunk_size, output_gcs_path, qa_check_types, qa_limit, qa_results_table).
+	•	Si cambias metadata.json o main.py, vuelve a hacer docker build & push y flex-template build.
+	•	El error “Missing/Unrecognized parameter” suele ser por nombres desalineados o por usar un template viejo en GCS. Revisa con gsutil cat cuál estás lanzando.
+
+¿Quieres que revisemos tu metadata.json actual para confirmar que calza con el main.py?
+

@@ -1,0 +1,53 @@
+{
+  "name": "op-sql-qa-pqt-to-gcs",
+  "description": "Read a SQL Server table, export to Parquet in GCS, then run QA queries",
+  "parameters": [
+    {
+      "name": "connection_name",
+      "label": "Connection Name",
+      "help_text": "Name of the database connection (e.g., bdw, fo).",
+      "param_type": "TEXT",
+      "is_optional": false
+    },
+    {
+      "name": "query",
+      "label": "SQL Query",
+      "help_text": "The SQL query to execute against SQL Server.",
+      "param_type": "TEXT",
+      "is_optional": false
+    },
+    {
+      "name": "output_path",
+      "label": "Output GCS Path",
+      "help_text": "GCS location to store the exported Parquet file.",
+      "param_type": "TEXT",
+      "is_optional": false
+    },
+    {
+      "name": "qa_query_id",
+      "label": "QA Query ID",
+      "help_text": "ID of the QA query from qa_query_plan to execute after main export.",
+      "param_type": "TEXT",
+      "is_optional": false
+    },
+    {
+      "name": "qa_bq_table",
+      "label": "QA BigQuery Table",
+      "help_text": "Fully qualified BigQuery table to read QA queries from.",
+      "param_type": "TEXT",
+      "is_optional": false
+    },
+    {
+      "name": "qa_check_type",
+      "label": "QA Check Type",
+      "help_text": "Type of QA check to run (can be a list, comma-separated).",
+      "param_type": "TEXT",
+      "is_optional": false
+    }
+  ],
+  "sdk_language": "PYTHON",
+  "flex_template": {
+    "image": "gcr.io/rxo-dataeng-datalake-np/op-sql-qa-pqt-to-gcs:latest",
+    "metadata_file": "metadata.json"
+  }
+}

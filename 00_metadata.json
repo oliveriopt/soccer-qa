@@ -1,0 +1,22 @@
+{
+  "name": "sql-pqt-to-gcs",
+  "description": "Extrae datos de SQL Server (full o change_tracking) en lotes y los guarda en Parquet en GCS. Integra lectura de definiciones de QA desde qa_query_plan en BigQuery.",
+  "parameters": [
+    {"name": "gcp_project", "label": "GCP Project", "helpText": "Proyecto donde están los secretos y BigQuery.", "isOptional": false},
+    {"name": "database", "label": "Database (SQL Server)", "isOptional": false},
+    {"name": "schema", "label": "Schema (SQL Server)", "isOptional": false},
+    {"name": "table", "label": "Table (SQL Server)", "isOptional": false},
+    {"name": "reload_flag", "label": "Reload Flag (true/false)", "defaultValue": "false", "isOptional": true},
+    {"name": "type_of_extraction", "label": "Extraction Type", "helpText": "full | change_tracking", "isOptional": false},
+    {"name": "batch_size", "label": "Batch Size", "defaultValue": "50000", "isOptional": true},
+    {"name": "output_gcs_path", "label": "Output GCS Path", "isOptional": false},
+    {"name": "query", "label": "Custom SQL Query (opcional)", "defaultValue": "", "isOptional": true},
+    {"name": "secret_id", "label": "Secret ID", "helpText": "Nombre del secreto en Secret Manager con credenciales de SQL Server.", "isOptional": false},
+    {"name": "primary_key", "label": "Primary Key", "isOptional": false},
+    {"name": "chunk_size", "label": "Chunk Size (SQL fetch)", "defaultValue": "100000", "isOptional": true},
+
+    {"name": "qa_check_types", "label": "QA Check Types CSV", "helpText": "Lista CSV de tipos de check de QA (p.ej. 'count,nulls,hashcheck').", "defaultValue": "", "isOptional": true},
+    {"name": "qa_plan_dataset", "label": "QA Plan Dataset", "defaultValue": "dataops_admin", "isOptional": true},
+    {"name": "qa_plan_table", "label": "QA Plan Table", "defaultValue": "qa_query_plan", "isOptional": true}
+  ]
+}

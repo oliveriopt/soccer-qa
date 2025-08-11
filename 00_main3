@@ -1,0 +1,128 @@
+import logging
+import sys
+from typing import List, Dict, Optional
+import apache_beam as beam
+from apache_beam.options.pipeline_options import PipelineOptions
+from google.cloud import bigquery
+
+# === Opciones personalizadas ===
+class CustomPipelineOptions(PipelineOptions):
+    @classmethod
+    def _add_argparse_args(cls, parser):
+        parser.add_argument('--gcp_project', required=True)
+        parser.add_argument('--database', required=True)
+        parser.add_argument('--schema', required=True)
+        parser.add_argument('--table', required=True)
+        parser.add_argument('--reload_flag', type=str, default="false")
+        parser.add_argument('--type_of_extraction', required=True)
+        parser.add_argument('--batch_size', type=int, default=50000)
+        parser.add_argument('--output_gcs_path', required=True)
+        parser.add_argument('--query', type=str, default='')
+        parser.add_argument('--secret_id', required=True)
+        parser.add_argument('--primary_key', required=True)
+        parser.add_argument('--chunk_size', type=int, default=100000)
+        parser.add_argument('--qa_check_types', type=str, default="")
+        parser.add_argument('--qa_plan_dataset', required=True)
+        parser.add_argument('--qa_plan_table', required=True)
+
+
+def _parse_qa_check_types(pipe_text: str) -> List[str]:
+    if not pipe_text:
+        return []
+    parts = [p.strip().lower() for p in pipe_text.split('|')]
+    return [p for p in parts if p]
+
+
+def read_qa_query_plan(
+    gcp_project: str,
+    qa_plan_dataset: str,
+    qa_plan_table: str,
+    database: str,
+    schema: str,
+    check_types: List[str],
+    table: Optional[str] = None,
+) -> List[Dict]:
+    if not check_types:
+        logging.warning("QA | 'qa_check_types' vacío. Retornando lista vacía.")
+        return []
+
+    full_table = f"`{gcp_project}.{qa_plan_dataset}.{qa_plan_table}`"
+    client = bigquery.Client(project=gcp_project)
+
+    table_filter = " AND table_name = @table " if table else ""
+
+    query = f"""
+    SELECT
+      query_id,
+      table_name,
+      check_type,
+      query_text,
+      expected_ouput_format,
+      table_catalog,
+      table_schema
+    FROM {full_table}
+    WHERE table_catalog = @database
+      AND table_schema  = @schema
+      {table_filter}
+      AND LOWER(check_type) IN UNNEST(@check_types)
+    ORDER BY query_id
+    """
+
+    params = [
+        bigquery.ScalarQueryParameter("database", "STRING", database),
+        bigquery.ScalarQueryParameter("schema",   "STRING", schema),
+        bigquery.ArrayQueryParameter("check_types", "STRING", check_types),
+    ]
+    if table:
+        params.append(bigquery.ScalarQueryParameter("table", "STRING", table))
+
+    job_config = bigquery.QueryJobConfig(query_parameters=params)
+    rows = list(client.query(query, job_config=job_config).result())
+
+    result: List[Dict] = []
+    for r in rows:
+        result.append({
+            "query_id": r.get("query_id"),
+            "table_name": r.get("table_name"),
+            "check_type": r.get("check_type"),
+            "query_text": r.get("query_text"),
+            "expected_ouput_format": r.get("expected_ouput_format"),
+            "table_catalog": r.get("table_catalog"),
+            "table_schema": r.get("table_schema"),
+        })
+
+    logging.info("QA | Filas recuperadas desde qa_query_plan: %d", len(result))
+    return result
+
+
+def run_pipeline():
+    pipeline_options = PipelineOptions(save_main_session=True)
+    custom_options = pipeline_options.view_as(CustomPipelineOptions)
+
+    qa_check_types = _parse_qa_check_types(custom_options.qa_check_types)
+
+    qa_rows = read_qa_query_plan(
+        gcp_project=custom_options.gcp_project,
+        qa_plan_dataset=custom_options.qa_plan_dataset,
+        qa_plan_table=custom_options.qa_plan_table,
+        database=custom_options.database,
+        schema=custom_options.schema,
+        check_types=qa_check_types,
+        table=custom_options.table,  # pasa la tabla
+    )
+
+    if not qa_rows:
+        logging.warning("No se encontraron queries QA para ejecutar.")
+        return
+
+    with beam.Pipeline(options=pipeline_options) as p:
+        (
+            p
+            | "Create QA Queries" >> beam.Create(qa_rows)
+            # Aquí irían los pasos de procesamiento de las queries
+        )
+
+
+if __name__ == "__main__":
+    logging.getLogger().setLevel(logging.INFO)
+    run_pipeline()

@@ -68,11 +68,15 @@ class CustomPipelineOptions(PipelineOptions):
                             help="Tabla con el plan de QA.")
 
 def camel_to_snake_case(name: str) -> str:
+    """
+    Converts CamelCase or PascalCase to snake_case.
+    """
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     s2 = re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1)
     return s2.replace("__", "_").lower()
 
 def get_casted_column_expressions(schema, table, conn):
+    """Returns a list of casted column expressions and column names."""
     unsupported_types = {"datetimeoffset", "sql_variant", "geometry", "hierarchyid", "geography", "timestamp"}
     cursor = conn.cursor()
     cursor.execute(f"""
@@ -94,13 +98,14 @@ def get_max_sys_change_version_bq(project_id: str, dataset: str, table: str) -> 
     client = bigquery.Client(project=project_id)
     table_ref = f"{project_id}.{dataset}.{table}"
     try:
-        query = f"SELECT MAX(sys_change_version) as max_version FROM `{table_ref}`"
+        query = f"SELECT MAX(sys_change_version) AS max_version FROM `{table_ref}`"
         result = client.query(query).result()
-        row = list(result)[0]
+        row_list = list(result)
+        row = row_list[0] if row_list else None
         return int(row.max_version) if row and row.max_version is not None else 0
     except Exception as e:
         logging.warning(f"Could not query sys_change_version from {table_ref}: {e}")
-        return 0
+        return 0  # default to 0 if column/table doesn't exist
 
 def generate_batch_queries(database, schema, table, batch_size, connection_string, reload_flag, type_of_extraction, primary_key, min_version_bq):
     logging.info(f"Generating batch queries for table: {schema}.{table}")
@@ -110,24 +115,29 @@ def generate_batch_queries(database, schema, table, batch_size, connection_strin
         return f"CAST({col_ref} AS NVARCHAR(MAX)) AS [{col}]"
 
     queries = []
+
     conn = None
     try:
         conn = pyodbc.connect(connection_string)
         cursor = conn.cursor()
 
+        # Get total rows
         cursor.execute(f"SELECT COUNT(*) FROM [{schema}].[{table}]")
         total_rows = cursor.fetchone()[0]
         logging.info(f"Total rows in table: {total_rows}")
 
+        # Get total change tracking rows
         cursor.execute(f"SELECT COUNT(*) FROM CHANGETABLE(CHANGES [{schema}].[{table}], 0) AS CT")
         total_rows_ct = cursor.fetchone()[0]
         logging.info(f"Total rows in change tracking: {total_rows_ct}")
 
+        # Get max SYS_CHANGE_VERSION
         cursor.execute(f"SELECT MAX(SYS_CHANGE_VERSION) FROM CHANGETABLE(CHANGES [{schema}].[{table}], 0) AS CT")
         max_ct_version = cursor.fetchone()[0] or 0
         logging.info(f"Max SYS_CHANGE_VERSION: {max_ct_version}")
         bq_dataset = "sqlserver_to_bq_silver"
-
+        
+        # Get column metadata
         cursor.execute(f"""
             SELECT COLUMN_NAME
             FROM INFORMATION_SCHEMA.COLUMNS
@@ -151,6 +161,7 @@ def generate_batch_queries(database, schema, table, batch_size, connection_strin
                     ) AS numbered
                     WHERE rn BETWEEN {start} AND {end}
                 """
+                logging.info(f"Generated FULL query for rows {start}-{end}")
                 queries.append(query.strip())
 
         elif type_of_extraction.lower() == "change_tracking":
@@ -171,6 +182,7 @@ def generate_batch_queries(database, schema, table, batch_size, connection_strin
                     ) AS numbered
                     WHERE rn BETWEEN {start} AND {end}
                 """
+                logging.info(f"Generated CT query for rows {start}-{end}")
                 queries.append(query.strip())
         else:
             raise ValueError("Unsupported type_of_extraction. Use 'full' or 'change_tracking'.")
@@ -180,6 +192,8 @@ def generate_batch_queries(database, schema, table, batch_size, connection_strin
             conn.close()
 
     return queries
+
+
 
 class StreamedChunkedReader(beam.DoFn):
     def __init__(self, connection_string, chunk_size):
@@ -234,6 +248,7 @@ class WriteParquetPerBatch(beam.DoFn):
             table = pa.Table.from_pylist(elements)
             with self.fs.open(output_file, 'wb') as f:
                 pq.write_table(table, f, compression='snappy')
+            logging.info(f"Wrote {len(elements)} rows to {output_file}")
             yield output_file
         except Exception as e:
             logging.error(f"Failed to write Parquet: {e}")
@@ -254,12 +269,24 @@ def read_qa_query_plan(
     schema: str,
     check_types: List[str],
 ) -> List[Dict]:
+    """
+    Lee <project>.<qa_plan_dataset>.<qa_plan_table> filtrando por:
+      - table_catalog = database
+      - table_schema  = schema
+      - LOWER(check_type) IN check_types
+    Devuelve lista de dicts con: query_id, table_name, check_type, query_text, expected_ouput_format, table_catalog, table_schema
+    """
     if not check_types:
         logging.warning("QA | 'qa_check_types' vacío. Retornando lista vacía.")
         return []
 
     full_table = f"`{gcp_project}.{qa_plan_dataset}.{qa_plan_table}`"
     client = bigquery.Client(project=gcp_project)
+
+    logging.info(
+        "QA | Leyendo plan de QA desde %s (database=%s, schema=%s, check_types=%s)",
+        full_table, database, schema, check_types
+    )
 
     query = f"""
     SELECT
@@ -299,7 +326,17 @@ def read_qa_query_plan(
         })
 
     logging.info("QA | Filas recuperadas desde qa_query_plan: %d", len(result))
+    if result:
+        sample = result[0]
+        logging.info(
+            "QA | Ejemplo -> query_id=%s, table=%s, check=%s, format=%s",
+            sample.get("query_id"), sample.get("table_name"),
+            sample.get("check_type"), sample.get("expected_ouput_format")
+        )
+    else:
+        logging.warning("QA | No se encontraron filas con los filtros dados.")
     return result
+
 
 def run_pipeline():
     pipeline_options = PipelineOptions(
@@ -318,9 +355,11 @@ def run_pipeline():
     config = get_sql_config(custom_options.secret_id, custom_options.gcp_project)
     connection_string = build_connection_string(config)
     bq_table = f"{custom_options.database.lower()}_{custom_options.schema.lower()}_{custom_options.table.lower()}"
-    bq_dataset = "sqlserver_to_bq_silver"
+    bq_dataset ="sqlserver_to_bq_silver"
     max_version_bq = get_max_sys_change_version_bq(custom_options.gcp_project, bq_dataset, bq_table)
+    logging.info(f"Max sys_change_version from BigQuery: {max_version_bq}")
 
+    # === QA integration: leer qa_query_plan (solo logging, sin modificar el flujo) ===
     qa_check_types = _parse_qa_check_types(getattr(custom_options, "qa_check_types", ""))
     qa_plan_dataset = getattr(custom_options, "qa_plan_dataset", "dataops_admin")
     qa_plan_table   = getattr(custom_options, "qa_plan_table", "qa_query_plan")
@@ -344,7 +383,7 @@ def run_pipeline():
         reload_flag=custom_options.reload_flag.strip().lower() in ("true", "1", "yes"),
         type_of_extraction=custom_options.type_of_extraction,
         primary_key=custom_options.primary_key,
-        min_version_bq=max_version_bq
+        min_version_bq=max_version_bq 
     )
 
     with beam.Pipeline(options=pipeline_options) as p:
@@ -354,6 +393,7 @@ def run_pipeline():
             | "Read & Chunk SQL" >> beam.ParDo(StreamedChunkedReader(connection_string, custom_options.chunk_size))
             | "Write Parquet" >> beam.ParDo(WriteParquetPerBatch(custom_options.output_gcs_path))
         )
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

@@ -411,7 +411,7 @@ class RunQAQuery(beam.DoFn):
             self.conn.close()
 
 
-# ---------- New: Parquet metrics computation & comparison ----------
+# ---------- Parquet metrics computation & comparison ----------
 
 def build_needed_checks(qa_rows: List[Dict], primary_key: str) -> Dict[str, Any]:
     """
@@ -557,15 +557,14 @@ class ComputeMetricsFromParquetFn(beam.DoFn):
                 yield (f"value_dist|{c}", freq)
 
 
-def merge_dicts(d1: Dict[Any, int], d2: Dict[Any, int]) -> Dict[Any, int]:
-    """Merges two frequency dicts by summing counts."""
-    if not d1:
-        return dict(d2) if d2 else {}
-    if not d2:
-        return dict(d1)
-    out = dict(d1)
-    for k, v in d2.items():
-        out[k] = out.get(k, 0) + v
+def merge_dicts_iter(values: Iterable[Dict[Any, int]]) -> Dict[Any, int]:
+    """Merge an iterable of frequency dicts by summing counts (for CombinePerKey)."""
+    out: Dict[Any, int] = {}
+    for d in values:
+        if not d:
+            continue
+        for k, v in d.items():
+            out[k] = out.get(k, 0) + int(v)
     return out
 
 
@@ -847,7 +846,7 @@ def run_pipeline():
             | "Run QA Queries (SQL Server)" >> beam.ParDo(RunQAQuery(connection_string))
         )
 
-        # Also persist QA results to JSONL for audit
+        # Persist QA results to JSONL for audit
         _ = (
             qa_results
             | "QA -> JSON" >> beam.Map(json.dumps)
@@ -876,8 +875,15 @@ def run_pipeline():
         )
         parquet_freqs_merged = (
             dict_partials
-            | "Combine Dicts" >> beam.CombinePerKey(merge_dicts)
-            | "Dicts -> TopN Lists" >> beam.Map(lambda kv: (kv[0], sorted(kv[1].items(), key=lambda x: x[1], reverse=True)[: int(needed_checks.get("value_dist_top_n", 10)) ]))
+            | "Combine Dicts" >> beam.CombinePerKey(merge_dicts_iter)
+            | "Dicts -> TopN Lists" >> beam.Map(
+                lambda kv: (
+                    kv[0],
+                    sorted(kv[1].items(), key=lambda x: x[1], reverse=True)[
+                        : int(needed_checks.get("value_dist_top_n", 10))
+                    ],
+                )
+            )
         )
 
         parquet_metrics = (
@@ -904,7 +910,7 @@ def run_pipeline():
         alerts = (
             grouped
             | "Compare SQL vs Parquet" >> beam.ParDo(CompareFn(float_tol=0.0, top_n=int(needed_checks.get("value_dist_top_n", 10))))
-            # Uncomment to keep only mismatches:
+            # To output only mismatches, uncomment the next line:
             # | beam.Filter(lambda d: d["status"] != "OK")
         )
 

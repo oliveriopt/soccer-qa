@@ -1,0 +1,129 @@
+{"severity":"INFO","time":"2025/08/12 19:53:05.418630","line":"python_template_launcher.go:40","message":"Started template launcher."}
+{"severity":"INFO","time":"2025/08/12 19:53:05.434638","line":"python_template_launcher.go:44","message":"Initialize Python template."}
+{"severity":"INFO","time":"2025/08/12 19:53:05.434666","line":"python_template.go:98","message":"Falling back to using template-container args from metadata: template-container-args"}
+{"severity":"INFO","time":"2025/08/12 19:53:05.436630","line":"python_template.go:108","message":"Validating template-container-args: {\"additionalBoolParameters\":[\"no_use_public_ips\"],\"consoleLogsLocation\":\"gs://rxo-dataeng-datalake-np-dataflow/staging/template_launches/2025-08-12_12_50_57-13545209311295764017/console_logs\",\"environment\":{\"region\":\"us-central1\",\"serviceAccountEmail\":\"ds-dataflow-dataeng-gsa@rxo-dataeng-datalake-np.iam.gserviceaccount.com\",\"stagingLocation\":\"gs://rxo-dataeng-datalake-np-dataflow/staging\",\"subnetwork\":\"https://www.googleapis.com/compute/v1/projects/nxo-corp-infra/regions/us-central1/subnetworks/rxo-dataeng-datalake-np-uscentral1\",\"tempLocation\":\"gs://rxo-dataeng-datalake-np-dataflow/temp\"},\"jobId\":\"2025-08-12_12_50_57-13545209311295764017\",\"jobName\":\"sql-qa-parquet-job-20250812-195055\",\"jobObjectLocation\":\"gs://rxo-dataeng-datalake-np-dataflow/staging/template_launches/2025-08-12_12_50_57-13545209311295764017/job_object\",\"operationResultLocation\":\"gs://rxo-dataeng-datalake-np-dataflow/staging/template_launches/2025-08-12_12_50_57-13545209311295764017/operation_result\",\"parameters\":{\"batch_size\":\"500000\",\"chunk_size\":\"100000\",\"database\":\"XpoMaster\",\"gcp_project\":\"rxo-dataeng-datalake-np\",\"output_gcs_path\":\"gs://rxo-dataeng-datalake-np-raw/sql/XPOMaster/locale/Address/2025/08/12/out1.snappy.parquet\",\"primary_key\":\"AddressId\",\"qa_check_types\":\"count_total_rows|nulls_per_column\",\"qa_plan_dataset\":\"dataops_admin\",\"qa_plan_table\":\"qa_query_plan\",\"query\":\"SELECT * FROM locale.Address\",\"reload_flag\":\"true\",\"schema\":\"locale\",\"secret_id\":\"rxo-dataeng-datalake-np-brokerage-fo-mssql-xpomaster-uat-creds-connection-string\",\"service_account_email\":\"ds-dataflow-dataeng-gsa@rxo-dataeng-datalake-np.iam.gserviceaccount.com\",\"staging_location\":\"gs://rxo-dataeng-datalake-np-dataflow/staging\",\"subnetwork\":\"https://www.googleapis.com/compute/v1/projects/nxo-corp-infra/regions/us-central1/subnetworks/rxo-dataeng-datalake-np-uscentral1\",\"table\":\"Address\",\"temp_location\":\"gs://rxo-dataeng-datalake-np-dataflow/temp\",\"type_of_extraction\":\"full\"},\"projectId\":\"rxo-dataeng-datalake-np\"}"}
+{"severity":"INFO","time":"2025/08/12 19:53:05.437202","line":"python_template.go:117","message":"Extracting operation result location."}
+{"severity":"INFO","time":"2025/08/12 19:53:05.437235","line":"python_template.go:125","message":"Operation result location: gs://rxo-dataeng-datalake-np-dataflow/staging/template_launches/2025-08-12_12_50_57-13545209311295764017/operation_result"}
+{"severity":"INFO","time":"2025/08/12 19:53:05.437254","line":"python_template.go:128","message":"Extracting console log location."}
+{"severity":"INFO","time":"2025/08/12 19:53:05.437269","line":"python_template.go:136","message":"Console logs location: gs://rxo-dataeng-datalake-np-dataflow/staging/template_launches/2025-08-12_12_50_57-13545209311295764017/console_logs"}
+{"severity":"INFO","time":"2025/08/12 19:53:05.437291","line":"python_template.go:139","message":"Extracting Python command specs."}
+{"severity":"INFO","time":"2025/08/12 19:53:05.438205","line":"python_template.go:148","message":"Generating launch args."}
+{"severity":"INFO","time":"2025/08/12 19:53:05.438337","line":"python_args.go:237","message":"Overriding temp_location with value: gs://rxo-dataeng-datalake-np-dataflow/temp (previous value: gs://rxo-dataeng-datalake-np-dataflow/temp)"}
+{"severity":"INFO","time":"2025/08/12 19:53:05.438389","line":"python_args.go:237","message":"Overriding staging_location with value: gs://rxo-dataeng-datalake-np-dataflow/staging (previous value: gs://rxo-dataeng-datalake-np-dataflow/staging)"}
+{"severity":"INFO","time":"2025/08/12 19:53:05.438416","line":"python_args.go:237","message":"Overriding subnetwork with value: https://www.googleapis.com/compute/v1/projects/nxo-corp-infra/regions/us-central1/subnetworks/rxo-dataeng-datalake-np-uscentral1 (previous value: https://www.googleapis.com/compute/v1/projects/nxo-corp-infra/regions/us-central1/subnetworks/rxo-dataeng-datalake-np-uscentral1)"}
+{"severity":"INFO","time":"2025/08/12 19:53:05.438456","line":"python_args.go:237","message":"Overriding service_account_email with value: ds-dataflow-dataeng-gsa@rxo-dataeng-datalake-np.iam.gserviceaccount.com (previous value: ds-dataflow-dataeng-gsa@rxo-dataeng-datalake-np.iam.gserviceaccount.com)"}
+{"severity":"INFO","time":"2025/08/12 19:53:05.438488","line":"launch.go:50","message":"Validating ExpectedFeatures."}
+{"severity":"INFO","time":"2025/08/12 19:53:05.438504","line":"launch.go:75","message":"Launching Python template."}
+{"severity":"INFO","time":"2025/08/12 19:53:05.438544","line":"python_template.go:64","message":"Using launch args: [/main.py --query=SELECT * FROM locale.Address --temp_location=gs://rxo-dataeng-datalake-np-dataflow/temp --gcp_project=rxo-dataeng-datalake-np --qa_check_types=count_total_rows|nulls_per_column --qa_plan_dataset=dataops_admin --chunk_size=100000 --secret_id=rxo-dataeng-datalake-np-brokerage-fo-mssql-xpomaster-uat-creds-connection-string --output_gcs_path=gs://rxo-dataeng-datalake-np-raw/sql/XPOMaster/locale/Address/2025/08/12/out1.snappy.parquet --runner=DataflowRunner --project=rxo-dataeng-datalake-np --job_name=sql-qa-parquet-job-20250812-195055 --region=us-central1 --subnetwork=https://www.googleapis.com/compute/v1/projects/nxo-corp-infra/regions/us-central1/subnetworks/rxo-dataeng-datalake-np-uscentral1 --database=XpoMaster --primary_key=AddressId --type_of_extraction=full --staging_location=gs://rxo-dataeng-datalake-np-dataflow/staging --batch_size=500000 --schema=locale --qa_plan_table=qa_query_plan --reload_flag=true --table=Address --template_location=gs://rxo-dataeng-datalake-np-dataflow/staging/template_launches/2025-08-12_12_50_57-13545209311295764017/job_object --service_account_email=ds-dataflow-dataeng-gsa@rxo-dataeng-datalake-np.iam.gserviceaccount.com --no_use_public_ips]"}
+{"severity":"INFO","time":"2025/08/12 19:53:05.438646","line":"exec.go:38","message":"Executing: python /main.py --query=SELECT * FROM locale.Address --temp_location=gs://rxo-dataeng-datalake-np-dataflow/temp --gcp_project=rxo-dataeng-datalake-np --qa_check_types=count_total_rows|nulls_per_column --qa_plan_dataset=dataops_admin --chunk_size=100000 --secret_id=rxo-dataeng-datalake-np-brokerage-fo-mssql-xpomaster-uat-creds-connection-string --output_gcs_path=gs://rxo-dataeng-datalake-np-raw/sql/XPOMaster/locale/Address/2025/08/12/out1.snappy.parquet --runner=DataflowRunner --project=rxo-dataeng-datalake-np --job_name=sql-qa-parquet-job-20250812-195055 --region=us-central1 --subnetwork=https://www.googleapis.com/compute/v1/projects/nxo-corp-infra/regions/us-central1/subnetworks/rxo-dataeng-datalake-np-uscentral1 --database=XpoMaster --primary_key=AddressId --type_of_extraction=full --staging_location=gs://rxo-dataeng-datalake-np-dataflow/staging --batch_size=500000 --schema=locale --qa_plan_table=qa_query_plan --reload_flag=true --table=Address --template_location=gs://rxo-dataeng-datalake-np-dataflow/staging/template_launches/2025-08-12_12_50_57-13545209311295764017/job_object --service_account_email=ds-dataflow-dataeng-gsa@rxo-dataeng-datalake-np.iam.gserviceaccount.com --no_use_public_ips"}
+{"severity":"INFO","time":"2025/08/12 19:53:08.663065","line":"exec.go:66","message":"INFO:root:Accessing secret 'rxo-dataeng-datalake-np-brokerage-fo-mssql-xpomaster-uat-creds-connection-string' from default project context"}
+{"severity":"INFO","time":"2025/08/12 19:53:08.899068","line":"exec.go:66","message":"INFO:root:Secret retrieved successfully."}
+{"severity":"INFO","time":"2025/08/12 19:53:08.899888","line":"exec.go:66","message":"INFO:root:Building SQL Server connection string..."}
+{"severity":"INFO","time":"2025/08/12 19:53:09.871409","line":"exec.go:66","message":"INFO:root:Max sys_change_version from BigQuery: 1915950"}
+{"severity":"INFO","time":"2025/08/12 19:53:09.877438","line":"exec.go:66","message":"INFO:root:QA | Reading QA plan from `rxo-dataeng-datalake-np.dataops_admin.qa_query_plan` (database='XpoMaster', schema='locale', table='Address', check_types=['count_total_rows', 'nulls_per_column'])"}
+{"severity":"INFO","time":"2025/08/12 19:53:10.473666","line":"exec.go:66","message":"INFO:root:QA | Rows fetched from qa_query_plan: 2"}
+{"severity":"INFO","time":"2025/08/12 19:53:10.473900","line":"exec.go:66","message":"INFO:root:QA | Total definitions found: 2"}
+{"severity":"INFO","time":"2025/08/12 19:53:10.474167","line":"exec.go:66","message":"INFO:root:Generating batch queries for table: locale.Address"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.455390","line":"exec.go:66","message":"INFO:root:Total rows in table: 19195662"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.616278","line":"exec.go:66","message":"INFO:root:Total rows in change tracking: 142606"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.761077","line":"exec.go:66","message":"INFO:root:Max SYS_CHANGE_VERSION: 2000634"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.805717","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 1-500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.806035","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 500001-1000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.806273","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 1000001-1500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.806439","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 1500001-2000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.806653","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 2000001-2500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.806751","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 2500001-3000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.806902","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 3000001-3500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.807123","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 3500001-4000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.807270","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 4000001-4500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.807402","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 4500001-5000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.807495","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 5000001-5500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.807638","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 5500001-6000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.807731","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 6000001-6500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.807892","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 6500001-7000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.808049","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 7000001-7500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.808142","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 7500001-8000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.808274","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 8000001-8500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.808364","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 8500001-9000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.808452","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 9000001-9500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.808597","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 9500001-10000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.808757","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 10000001-10500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.808852","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 10500001-11000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.808999","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 11000001-11500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.809121","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 11500001-12000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.809341","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 12000001-12500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.809438","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 12500001-13000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.809527","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 13000001-13500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.809668","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 13500001-14000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.809758","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 14000001-14500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.809907","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 14500001-15000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.810131","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 15000001-15500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.810222","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 15500001-16000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.810329","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 16000001-16500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.810414","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 16500001-17000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.810517","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 17000001-17500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.810629","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 17500001-18000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.810718","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 18000001-18500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.810825","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 18500001-19000000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.810906","line":"exec.go:66","message":"INFO:root:Generated FULL query for rows 19000001-19500000"}
+{"severity":"INFO","time":"2025/08/12 19:53:11.917500","line":"exec.go:66","message":"WARNING:apache_beam.options.pipeline_options:Bucket specified in temp_location has soft-delete policy enabled. To avoid being billed for unnecessary storage costs, turn off the soft delete feature on buckets that your Dataflow jobs use for temporary and staging storage. For more information, see https://cloud.google.com/storage/docs/use-soft-delete#remove-soft-delete-policy."}
+{"severity":"INFO","time":"2025/08/12 19:53:11.960195","line":"exec.go:66","message":"WARNING:apache_beam.options.pipeline_options:Bucket specified in staging_location has soft-delete policy enabled. To avoid being billed for unnecessary storage costs, turn off the soft delete feature on buckets that your Dataflow jobs use for temporary and staging storage. For more information, see https://cloud.google.com/storage/docs/use-soft-delete#remove-soft-delete-policy."}
+{"severity":"INFO","time":"2025/08/12 19:53:11.968801","line":"exec.go:66","message":"WARNING:apache_beam.options.pipeline_options_validator:Setting sdk_container_image to value of legacy flag worker_harness_container_image."}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345607","line":"exec.go:66","message":"CustomPipelineOptions(batch_size=500000, chunk_size=100000, database=XpoMaster, gcp_project=rxo-dataeng-datalake-np, output_gcs_path=gs://rxo-dataeng-datalake-np-raw/sql/XPOMaster/locale/Address/2025/08/12/out1.snappy.parquet, primary_key=AddressId, qa_check_types=count_total_rows|nulls_per_column, qa_plan_dataset=dataops_admin, qa_plan_table=qa_query_plan, query=SELECT * FROM locale.Address, reload_flag=true, schema=locale, secret_id=rxo-dataeng-datalake-np-brokerage-fo-mssql-xpomaster-uat-creds-connection-string, table=Address, type_of_extraction=full)"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345708","line":"exec.go:66","message":"[INFO] Accessing secret 'rxo-dataeng-datalake-np-brokerage-fo-mssql-xpomaster-uat-creds-connection-string' from default project context"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345726","line":"exec.go:66","message":"[INFO] Secret retrieved successfully"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345738","line":"exec.go:66","message":"[INFO] Building SQL Server connection string..."}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345764","line":"exec.go:66","message":"[INFO] Max sys_change_version from BigQuery: 1915950"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345776","line":"exec.go:66","message":"[INFO] QA check types: ['count_total_rows', 'nulls_per_column'] (\u003cclass 'list'\u003e)"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345789","line":"exec.go:66","message":"[INFO] QA | Reading QA plan from `rxo-dataeng-datalake-np.dataops_admin.qa_query_plan` (database='XpoMaster', schema='locale', table='Address', check_types=['count_total_rows', 'nulls_per_column'])"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345806","line":"exec.go:66","message":"[DEBUG] QA | Query to BQ:"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345817","line":"exec.go:66","message":"    SELECT"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345827","line":"exec.go:66","message":"      query_id,"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345837","line":"exec.go:66","message":"      table_name,"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345852","line":"exec.go:66","message":"      check_type,"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345866","line":"exec.go:66","message":"      query_text,"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345877","line":"exec.go:66","message":"      expected_output_format,"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345887","line":"exec.go:66","message":"      table_catalog,"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345904","line":"exec.go:66","message":"      table_schema"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345913","line":"exec.go:66","message":"    FROM `rxo-dataeng-datalake-np.dataops_admin.qa_query_plan`"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345925","line":"exec.go:66","message":"    WHERE table_catalog = 'XpoMaster'"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345951","line":"exec.go:66","message":"      AND table_schema  = 'locale'"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345962","line":"exec.go:66","message":"      AND table_name    = 'Address'"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345972","line":"exec.go:66","message":"      AND check_type IN UNNEST(['count_total_rows', 'nulls_per_column'])"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345984","line":"exec.go:66","message":"    ORDER BY query_id"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.345994","line":"exec.go:66","message":"    "}
+{"severity":"INFO","time":"2025/08/12 19:53:12.346019","line":"exec.go:66","message":"[INFO] QA | Rows fetched from qa_query_plan: 2"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.346030","line":"exec.go:66","message":"[INFO] QA | Total QA definitions found: 2"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.346041","line":"exec.go:66","message":"[INFO] Generating batch queries for table: locale.Address"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.346058","line":"exec.go:66","message":"[INFO] Total rows in table: 19195662"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.346069","line":"exec.go:66","message":"[INFO] Total rows in change tracking: 142606"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.346085","line":"exec.go:66","message":"[INFO] Max SYS_CHANGE_VERSION: 2000634"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.346096","line":"exec.go:66","message":"[INFO] Total extraction batch queries: 39"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.346107","line":"exec.go:66","message":"[INFO] Needed checks descriptor: {'count_total_rows': True, 'nulls_per_column': set(), 'duplicates_primary_key': False, 'value_dist': set(), 'primary_key': 'address_id', 'value_dist_top_n': 10}"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.346193","line":"exec.go:66","message":"Traceback (most recent call last):"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.346258","line":"exec.go:66","message":"  File \"/main.py\", line 922, in \u003cmodule\u003e"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.346718","line":"exec.go:66","message":"    run_pipeline()"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.346779","line":"exec.go:66","message":"  File \"/main.py\", line 878, in run_pipeline"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.347175","line":"exec.go:66","message":"    dict_partials"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.347230","line":"exec.go:66","message":"  File \"/usr/local/lib/python3.9/site-packages/apache_beam/pvalue.py\", line 138, in __or__"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.347415","line":"exec.go:66","message":"    return self.pipeline.apply(ptransform, self)"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.347466","line":"exec.go:66","message":"  File \"/usr/local/lib/python3.9/site-packages/apache_beam/pipeline.py\", line 705, in apply"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.347771","line":"exec.go:66","message":"    return self.apply("}
+{"severity":"INFO","time":"2025/08/12 19:53:12.347833","line":"exec.go:66","message":"  File \"/usr/local/lib/python3.9/site-packages/apache_beam/pipeline.py\", line 716, in apply"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.348137","line":"exec.go:66","message":"    return self.apply(transform, pvalueish)"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.348190","line":"exec.go:66","message":"  File \"/usr/local/lib/python3.9/site-packages/apache_beam/pipeline.py\", line 781, in apply"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.348485","line":"exec.go:66","message":"    transform.type_check_inputs(pvalueish)"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.348535","line":"exec.go:66","message":"  File \"/usr/local/lib/python3.9/site-packages/apache_beam/transforms/ptransform.py\", line 921, in type_check_inputs"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.348869","line":"exec.go:66","message":"    type_hints = self.get_type_hints()"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.348920","line":"exec.go:66","message":"  File \"/usr/local/lib/python3.9/site-packages/apache_beam/typehints/decorators.py\", line 514, in get_type_hints"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.349199","line":"exec.go:66","message":"    self.default_type_hints()).with_defaults("}
+{"severity":"INFO","time":"2025/08/12 19:53:12.349263","line":"exec.go:66","message":"  File \"/usr/local/lib/python3.9/site-packages/apache_beam/transforms/core.py\", line 2974, in default_type_hints"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.349993","line":"exec.go:66","message":"    result = self.fn.get_type_hints()"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.350072","line":"exec.go:66","message":"  File \"/usr/local/lib/python3.9/site-packages/apache_beam/typehints/decorators.py\", line 514, in get_type_hints"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.350320","line":"exec.go:66","message":"    self.default_type_hints()).with_defaults("}
+{"severity":"INFO","time":"2025/08/12 19:53:12.350375","line":"exec.go:66","message":"  File \"/usr/local/lib/python3.9/site-packages/apache_beam/transforms/core.py\", line 1341, in default_type_hints"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.350771","line":"exec.go:66","message":"    raise TypeCheckError("}
+{"severity":"INFO","time":"2025/08/12 19:53:12.350846","line":"exec.go:66","message":"apache_beam.typehints.decorators.TypeCheckError: All functions for a Combine PTransform must accept a single argument compatible with: Iterable[Any]. Instead a function with input type: Dict[Any, \u003cclass 'int'\u003e] was received."}
+{"severity":"INFO","time":"2025/08/12 19:53:12.767846","line":"exec.go:52","message":"python failed with exit status 1"}
+{"severity":"ERROR","time":"2025/08/12 19:53:12.767923","line":"launch.go:80","message":"Error: Template launch failed: exit status 1"}
+{"severity":"INFO","time":"2025/08/12 19:53:12.767950","line":"launch.go:102","message":"Uploading console logs to GCS location: gs://rxo-dataeng-datalake-np-dataflow/staging/template_launches/2025-08-12_12_50_57-13545209311295764017/console_logs"}

@@ -1,0 +1,19 @@
+SELECT
+    SUM(CASE WHEN [Address_Id] IS NULL THEN 1 ELSE 0 END) AS nulls_AddressId,
+    SUM(CASE WHEN [CityId] IS NULL THEN 1 ELSE 0 END) AS nulls_CityId,
+    SUM(CASE WHEN [StateId] IS NULL THEN 1 ELSE 0 END) AS nulls_StateId,
+    SUM(CASE WHEN [ZipId] IS NULL THEN 1 ELSE 0 END) AS nulls_ZipId,
+    SUM(CASE WHEN [CountryId] IS NULL THEN 1 ELSE 0 END) AS nulls_CountryId,
+    SUM(CASE WHEN [Address1] IS NULL THEN 1 ELSE 0 END) AS nulls_Address1,
+    SUM(CASE WHEN [Address2] IS NULL THEN 1 ELSE 0 END) AS nulls_Address2,
+    SUM(CASE WHEN [CustomerCode] IS NULL THEN 1 ELSE 0 END) AS nulls_CustomerCode,
+    SUM(CASE WHEN [Latitude] IS NULL THEN 1 ELSE 0 END) AS nulls_Latitude,
+    SUM(CASE WHEN [Longitude] IS NULL THEN 1 ELSE 0 END) AS nulls_Longitude,
+    SUM(CASE WHEN [GeoCode] IS NULL THEN 1 ELSE 0 END) AS nulls_GeoCode,
+    SUM(CASE WHEN [Geocoded] IS NULL THEN 1 ELSE 0 END) AS nulls_Geocoded,
+    SUM(CASE WHEN [CreatedBy] IS NULL THEN 1 ELSE 0 END) AS nulls_CreatedBy,
+    SUM(CASE WHEN [CreatedDate] IS NULL THEN 1 ELSE 0 END) AS nulls_CreatedDate,
+    SUM(CASE WHEN [UpdatedBy] IS NULL THEN 1 ELSE 0 END) AS nulls_UpdatedBy,
+    SUM(CASE WHEN [UpdatedDate] IS NULL THEN 1 ELSE 0 END) AS nulls_UpdatedDate,
+    SUM(CASE WHEN [S2CellId] IS NULL THEN 1 ELSE 0 END) AS nulls_S2CellId
+FROM `rxo-dataeng-datalake-np.sqlserver_to_bq_bronze.xpomaster_locale_address`

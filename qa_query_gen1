@@ -1,0 +1,167 @@
+import pandas as pd
+from google.cloud import bigquery
+
+
+class QAQueryGeneratorFromColumns:
+    """
+    Generates QA queries for a SQL Server source and writes them to a BigQuery table.
+
+    Output columns:
+      - query_id (1..N, sequential)
+      - table_name               # ONLY the physical table name (e.g., 'Address')
+      - table_catalog            # source catalog / database (e.g., 'XpoMaster')
+      - table_schema             # source schema (e.g., 'locale')
+      - check_type               # e.g., 'count_total_rows', 'nulls_per_column|AddressId', ...
+      - query_text               # T-SQL to run on SQL Server
+      - expected_output_format   # 'single_row_scalar' | 'row_level' | 'multi_row_summary'
+    """
+
+    def __init__(self, project_id: str, source_table: str, output_table: str):
+        """
+        :param project_id: GCP project id.
+        :param source_table: Fully qualified BQ table or view with columns catalog:
+                             "<dataset>.<view>" with:
+                               table_catalog, table_schema, table_name, column_name
+        :param output_table: Destination BQ table "<dataset>.<qa_query_plan>"
+        """
+        self.project_id = project_id
+        self.source_table = source_table
+        self.output_table = output_table
+        self.client = bigquery.Client(project=project_id)
+
+    def load_column_metadata(self) -> pd.DataFrame:
+        query = f"""
+            SELECT table_catalog, table_schema, table_name, column_name
+            FROM `{self.project_id}.{self.source_table}`
+        """
+        return self.client.query(query).to_dataframe(create_bqstorage_client=False)
+
+    @staticmethod
+    def sanitize_ident(ident: str) -> str:
+        # Quote SQL Server identifiers like [ColumnName]
+        return f"[{ident}]"
+
+    def build_count_query(self, catalog: str, schema: str, table: str) -> dict:
+        qualified = f"{self.sanitize_ident(catalog)}.{self.sanitize_ident(schema)}.{self.sanitize_ident(table)}"
+        return {
+            "table_name": table,
+            "table_catalog": catalog,
+            "table_schema": schema,
+            "check_type": "count_total_rows",
+            "query_text": f"SELECT COUNT(*) AS total_rows FROM {qualified}",
+            "expected_output_format": "single_row_scalar",
+        }
+
+    def build_nulls_query_per_column(
+        self, catalog: str, schema: str, table: str, column: str
+    ) -> dict:
+        """
+        One query per column:
+          SELECT SUM(CASE WHEN [col] IS NULL THEN 1 ELSE 0 END) AS nulls_<col> FROM [cat].[sch].[tbl]
+        """
+        qualified = f"{self.sanitize_ident(catalog)}.{self.sanitize_ident(schema)}.{self.sanitize_ident(table)}"
+        col_q = self.sanitize_ident(column)
+        alias = f"nulls_{column}"
+        sql = (
+            "SELECT SUM(CASE WHEN {col} IS NULL THEN 1 ELSE 0 END) AS {alias} "
+            "FROM {qualified}"
+        ).format(col=col_q, alias=alias, qualified=qualified)
+
+        return {
+            "table_name": table,
+            "table_catalog": catalog,
+            "table_schema": schema,
+            "check_type": f"nulls_per_column|{column}",
+            "query_text": sql,
+            "expected_output_format": "single_row_scalar",
+        }
+
+    def build_hashcheck_query(self, catalog: str, schema: str, table: str, columns: list) -> dict:
+        qualified = f"{self.sanitize_ident(catalog)}.{self.sanitize_ident(schema)}.{self.sanitize_ident(table)}"
+        cols = [self.sanitize_ident(c) for c in columns]
+        concat_expr = ", ".join(f"CAST({c} AS NVARCHAR(MAX))" for c in cols)
+        query = f"""
+            SELECT *,
+                   CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', CONCAT_WS('|', {concat_expr})), 2) AS hashcheck
+            FROM {qualified}
+        """.strip()
+        return {
+            "table_name": table,
+            "table_catalog": catalog,
+            "table_schema": schema,
+            "check_type": "hashcheck",
+            "query_text": query,
+            "expected_output_format": "row_level",
+        }
+
+    def build_duplicates_query(self, catalog: str, schema: str, table: str, column: str) -> dict:
+        """
+        Simple duplicate check on the provided column (defaults to the first column).
+        """
+        qualified = f"{self.sanitize_ident(catalog)}.{self.sanitize_ident(schema)}.{self.sanitize_ident(table)}"
+        col = self.sanitize_ident(column)
+        query = f"""
+            SELECT {col} AS key_value, COUNT(*) AS cnt
+            FROM {qualified}
+            GROUP BY {col}
+            HAVING COUNT(*) > 1
+        """.strip()
+        return {
+            "table_name": table,
+            "table_catalog": catalog,
+            "table_schema": schema,
+            "check_type": "duplicates_primary_key",
+            "query_text": query,
+            "expected_output_format": "multi_row_summary",
+        }
+
+    def generate_all_queries(self) -> pd.DataFrame:
+        df = self.load_column_metadata()
+        grouped = (
+            df.groupby(['table_catalog', 'table_schema', 'table_name'])['column_name']
+              .apply(list)
+              .reset_index(name='columns')
+        )
+
+        rows = []
+        for _, r in grouped.iterrows():
+            catalog = r['table_catalog']
+            schema = r['table_schema']
+            table = r['table_name']
+            columns = r['columns'] or []
+
+            # 1) total rows
+            rows.append(self.build_count_query(catalog, schema, table))
+
+            # 2) nulls per column (one row per column)
+            for col in columns:
+                rows.append(self.build_nulls_query_per_column(catalog, schema, table, col))
+
+            # 3) hashcheck (row-level)
+            if columns:
+                rows.append(self.build_hashcheck_query(catalog, schema, table, columns))
+
+            # 4) duplicates on first column (adjust to your real PK if needed)
+            if columns:
+                rows.append(self.build_duplicates_query(catalog, schema, table, columns[0]))
+
+        df_out = pd.DataFrame(
+            rows,
+            columns=[
+                "table_name",
+                "table_catalog",
+                "table_schema",
+                "check_type",
+                "query_text",
+                "expected_output_format",
+            ],
+        )
+        df_out.insert(0, "query_id", range(1, len(df_out) + 1))
+        return df_out
+
+    def upload_to_bigquery(self, df: pd.DataFrame):
+        table_ref = f"{self.project_id}.{self.output_table}"
+        job_config = bigquery.LoadJobConfig(write_disposition="WRITE_TRUNCATE")
+        job = self.client.load_table_from_dataframe(df, table_ref, job_config=job_config)
+        job.result()
+        print(f"Uploaded {len(df)} QA queries to {table_ref}")
